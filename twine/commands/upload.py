@@ -91,6 +91,9 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
     repository = upload_settings.create_repository()
     uploaded_packages = []
 
+    # Determine if this will create a draft release
+    is_draft_release = upload_settings.is_draft_release
+
     for package in packages_to_upload:
         skip_message = "  Skipping {} because it appears to already exist".format(
             package.basefilename
@@ -103,7 +106,7 @@ def upload(upload_settings: settings.Settings, dists: List[str]) -> None:
             print(skip_message)
             continue
 
-        resp = repository.upload(package)
+        resp = repository.upload(package, is_draft_release=is_draft_release)
 
         # Bug 92. If we get a redirect we should abort because something seems
         # funky. The behaviour is not well defined and redirects being issued

@@ -133,7 +133,9 @@ class Repository:
         resp.close()
         return resp
 
-    def _upload(self, package: package_file.PackageFile) -> requests.Response:
+    def _upload(
+        self, package: package_file.PackageFile, is_draft_release: bool = False,
+    ) -> requests.Response:
         data = package.metadata_dictionary()
         data.update(
             {
@@ -164,22 +166,24 @@ class Repository:
                 monitor = requests_toolbelt.MultipartEncoderMonitor(
                     encoder, lambda monitor: bar.update_to(monitor.bytes_read)
                 )
-
+                headers = {"Content-Type": monitor.content_type}
+                if is_draft_release:
+                    headers["Is-Draft"] = "True"
                 resp = self.session.post(
-                    self.url,
-                    data=monitor,
-                    allow_redirects=False,
-                    headers={"Content-Type": monitor.content_type},
+                    self.url, data=monitor, allow_redirects=False, headers=headers,
                 )
 
         return resp
 
     def upload(
-        self, package: package_file.PackageFile, max_redirects: int = 5
+        self,
+        package: package_file.PackageFile,
+        max_redirects: int = 5,
+        is_draft_release: bool = False,
     ) -> requests.Response:
         number_of_redirects = 0
         while number_of_redirects < max_redirects:
-            resp = self._upload(package)
+            resp = self._upload(package, is_draft_release)
 
             if resp.status_code == requests.codes.OK:
                 return resp

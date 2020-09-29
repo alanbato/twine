@@ -58,6 +58,7 @@ class Settings:
         client_cert: Optional[str] = None,
         repository_name: str = "pypi",
         repository_url: Optional[str] = None,
+        is_draft_release: bool = False,
         verbose: bool = False,
         disable_progress_bar: bool = False,
         **ignored_kwargs: Any,
@@ -139,6 +140,7 @@ class Settings:
             self.repository_config,
             auth.CredentialInput(username, password),
         )
+        self.is_draft_release = is_draft_release
 
     @property
     def username(self) -> Optional[str]:
@@ -248,6 +250,14 @@ class Settings:
             help="The .pypirc config file to use.",
         )
         parser.add_argument(
+            "--draft",
+            default=False,
+            action="store_true",
+            help="If creating a new release, create it in an unpublished state"
+            ". (Only valid when uploading to PyPI. Other implementations may"
+            " not support this.)",
+        )
+        parser.add_argument(
             "--skip-existing",
             default=False,
             action="store_true",
@@ -292,6 +302,7 @@ class Settings:
         settings = vars(args)
         settings["repository_name"] = settings.pop("repository")
         settings["cacert"] = settings.pop("cert")
+        settings["is_draft_release"] = settings.pop("draft")
         return cls(**settings)
 
     def _handle_package_signing(
